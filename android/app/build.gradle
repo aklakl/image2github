@@ -24,7 +24,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.image2github.image2github"
-    compileSdkVersion 34
+    compileSdk 36
     ndkVersion flutter.ndkVersion
 
     compileOptions {
