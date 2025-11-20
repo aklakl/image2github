@@ -6,10 +6,10 @@ class RepositoryCard extends StatelessWidget {
   final VoidCallback onTap;
   
   const RepositoryCard({
-    Key? key,
+    super.key,
     required this.repository,
     required this.onTap,
-  }) : super(key: key);
+  });
   
   @override
   Widget build(BuildContext context) {

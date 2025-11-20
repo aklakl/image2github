@@ -7,7 +7,7 @@ void main() {
 }
 
 class Image2GitHubApp extends StatelessWidget {
-  const Image2GitHubApp({Key? key}) : super(key: key);
+  const Image2GitHubApp({super.key});
   
   @override
   Widget build(BuildContext context) {

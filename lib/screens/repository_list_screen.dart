@@ -5,7 +5,7 @@ import '../widgets/repository_card.dart';
 import 'image_upload_screen.dart';
 
 class RepositoryListScreen extends StatefulWidget {
-  const RepositoryListScreen({Key? key}) : super(key: key);
+  const RepositoryListScreen({super.key});
   
   @override
   State<RepositoryListScreen> createState() => _RepositoryListScreenState();
