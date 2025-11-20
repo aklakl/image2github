@@ -1,0 +1,31 @@
+name: image2github
+description: A Flutter mobile application to browse GitHub repositories and upload images.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # HTTP client for GitHub API
+  http: ^1.1.0
+  
+  # Image picker for selecting images from device
+  image_picker: ^1.0.4
+  
+  # File picker as alternative
+  file_picker: ^6.0.0
+  
+  # UI icons
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
