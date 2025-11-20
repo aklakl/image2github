@@ -24,6 +24,7 @@ A Flutter mobile application that allows you to browse your GitHub repositories 
 2. Run `flutter pub get` to install dependencies
 3. Update the GitHub credentials in `lib/config/constants.dart` with your information
 4. Run the app using `flutter run`
+5. Build APK => flutter build apk --debug
 
 ## Usage
 
