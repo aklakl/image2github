@@ -8,9 +8,9 @@ class ImageUploadScreen extends StatefulWidget {
   final Repository repository;
   
   const ImageUploadScreen({
-    Key? key,
+    super.key,
     required this.repository,
-  }) : super(key: key);
+  });
   
   @override
   State<ImageUploadScreen> createState() => _ImageUploadScreenState();
