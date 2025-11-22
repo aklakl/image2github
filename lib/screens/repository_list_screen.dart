@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/repository.dart';
+import '../services/auth_service.dart';
 import '../services/github_service.dart';
 import '../services/storage_service.dart';
 import '../widgets/repository_card.dart';
 import 'image_upload_screen.dart';
+import 'login_screen.dart';
 import 'repo_files_screen.dart';
 
 class RepositoryListScreen extends StatefulWidget {
@@ -110,17 +112,34 @@ class _RepositoryListScreenState extends State<RepositoryListScreen> {
     await _storageService.togglePinRepo(repository.name);
     _filterAndSortRepositories();
   }
+
+  Future<void> _logout() async {
+    final authService = AuthService();
+    await authService.logout();
+    if (mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
+  }
   
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: SelectableText(
+        title: const SelectableText(
           'My Repositories',
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: _logout,
+            tooltip: 'Logout',
+          ),
+        ],
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

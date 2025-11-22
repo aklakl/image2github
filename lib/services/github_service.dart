@@ -2,11 +2,30 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/repository.dart';
 import '../config/constants.dart';
+import 'auth_service.dart';
 
 class GitHubService {
   final String _baseUrl = AppConfig.githubApiBaseUrl;
-  final String _token = AppConfig.githubToken;
-  final String _username = AppConfig.githubUsername;
+  final AuthService _authService = AuthService();
+  String? _token;
+  String? _username;
+  
+  GitHubService({String? token, String? username}) {
+    _token = token;
+    _username = username;
+  }
+  
+  Future<void> _ensureCredentials() async {
+    if (_token == null) {
+      _token = await _authService.getToken();
+    }
+    if (_username == null) {
+      _username = await _authService.getUsername();
+    }
+    if (_token == null) {
+      throw Exception('Authentication required');
+    }
+  }
   
   // Get authorization headers
   Map<String, String> get _headers => {
@@ -15,10 +34,12 @@ class GitHubService {
     'Content-Type': 'application/json',
   };
   
-  /// Fetch all repositories for the configured user
+  /// Fetch all repositories for the authenticated user
   Future<List<Repository>> fetchRepositories() async {
+    await _ensureCredentials();
     try {
-      final url = Uri.parse('$_baseUrl/users/$_username/repos?per_page=100');
+      // Use /user/repos for authenticated user
+      final url = Uri.parse('$_baseUrl/user/repos?per_page=100&sort=updated');
       final response = await http.get(url, headers: _headers);
       
       if (response.statusCode == 200) {
@@ -34,6 +55,7 @@ class GitHubService {
   
   /// Get file information from repository to check if it exists
   Future<String?> _getFileSha(String owner, String repo, String path, String branch) async {
+    await _ensureCredentials();
     try {
       final url = Uri.parse('$_baseUrl/repos/$owner/$repo/contents/$path?ref=$branch');
       final response = await http.get(url, headers: _headers);
@@ -49,17 +71,13 @@ class GitHubService {
   }
   
   /// Upload or update a file in a GitHub repository
-  /// 
-  /// [repository] - The repository to upload to
-  /// [filePath] - Path in repository where file should be stored (e.g., 'images/logo.png')
-  /// [fileBytes] - The image file bytes
-  /// [commitMessage] - Optional commit message
   Future<bool> uploadFile({
     required Repository repository,
     required String filePath,
     required List<int> fileBytes,
     String? commitMessage,
   }) async {
+    await _ensureCredentials();
     try {
       // Encode file to base64
       final base64Content = base64Encode(fileBytes);
@@ -105,6 +123,7 @@ class GitHubService {
 
   /// Fetch contents of a repository path
   Future<List<Map<String, dynamic>>> fetchRepoContents(String owner, String repo, String path) async {
+    await _ensureCredentials();
     try {
       final url = Uri.parse('$_baseUrl/repos/$owner/$repo/contents/$path');
       final response = await http.get(url, headers: _headers);

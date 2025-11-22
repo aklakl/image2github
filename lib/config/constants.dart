@@ -1,10 +1,11 @@
 class AppConfig {
-  // GitHub Configuration
-  static const String githubUsername = 'aklakl';
-  static const String githubToken = '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';
+  // GitHub OAuth Configuration
+  // TODO: Replace with your Client ID and Client Secret
+  static const String githubClientId = 'Ov23li451NheLOJ5n6Oq';
+  static const String githubClientSecret = 'cee7f1444a75753590d1ab8b8c9c1740d634d280';
+  static const String githubRedirectUri = 'image2github://callback';
   static const String githubApiBaseUrl = 'https://api.github.com';
   
-  // App Configuration
-  static const String appName = 'Image2GitHub';
-  static const String appVersion = '1.0.0';
+  // Scopes required for the app
+  static const String githubScopes = 'repo read:user';
 }
