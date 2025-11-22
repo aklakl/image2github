@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -14,11 +15,16 @@ class AuthService {
   // Initialize deep link listener
   Stream<String?> get deepLinkStream => linkStream;
 
+  // Get platform-specific redirect URI
+  String get _redirectUri {
+    return kIsWeb ? AppConfig.githubRedirectUriWeb : AppConfig.githubRedirectUri;
+  }
+
   // Launch GitHub OAuth login
   Future<void> login() async {
     final url = Uri.https('github.com', '/login/oauth/authorize', {
       'client_id': AppConfig.githubClientId,
-      'redirect_uri': AppConfig.githubRedirectUri,
+      'redirect_uri': _redirectUri,
       'scope': AppConfig.githubScopes,
     });
 
@@ -42,7 +48,7 @@ class AuthService {
           'client_id': AppConfig.githubClientId,
           'client_secret': AppConfig.githubClientSecret,
           'code': code,
-          'redirect_uri': AppConfig.githubRedirectUri,
+          'redirect_uri': _redirectUri,
         }),
       );
 
@@ -91,6 +97,11 @@ class AuthService {
   // Get stored username
   Future<String?> getUsername() async {
     return await _storage.read(key: _usernameKey);
+  }
+
+  // Save token directly (for Personal Access Token login)
+  Future<void> saveToken(String token) async {
+    await _storage.write(key: _tokenKey, value: token);
   }
 
   // Logout

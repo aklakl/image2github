@@ -24,7 +24,7 @@ A Flutter mobile application that allows you to browse your GitHub repositories 
 2. Clear Gradle cache `rm -rf ~/.gradle/caches/`  and`flutter clean` 
 3. Run `flutter clean && flutter pub get` to install dependencies
 4. Update the GitHub credentials in `lib/config/constants.dart` with your information
-5. Run the app using `flutter run` or `flutter run -d chrome` for web
+5. Run the app using `flutter run` or `flutter run -d chrome --web-port=3000` for web
 6. Build APK => `flutter build apk --debug`
 
 `$env:GRADLE_USER_HOME = 'D:\.gradle_home'; flutter clean; flutter build apk --debug --verbose`

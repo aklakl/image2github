@@ -91,6 +91,13 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
           widget.path.isEmpty ? widget.repository.name : widget.path.split('/').last,
           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: 'Close',
+          ),
+        ],
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

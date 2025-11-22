@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/repository.dart';
 import '../services/github_service.dart';
+import '../services/storage_service.dart';
 import 'repo_files_screen.dart';
 
 class ImageUploadScreen extends StatefulWidget {
@@ -19,11 +20,26 @@ class ImageUploadScreen extends StatefulWidget {
 
 class _ImageUploadScreenState extends State<ImageUploadScreen> {
   final GitHubService _githubService = GitHubService();
+  final StorageService _storageService = StorageService();
   final ImagePicker _imagePicker = ImagePicker();
   final TextEditingController _pathController = TextEditingController();
   
   File? _selectedImage;
   bool _isUploading = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPath();
+  }
+  
+  Future<void> _loadSavedPath() async {
+    await _storageService.init();
+    final savedPath = _storageService.getTargetPath(widget.repository.name);
+    if (savedPath.isNotEmpty) {
+      _pathController.text = savedPath;
+    }
+  }
   
   @override
   void dispose() {
@@ -76,11 +92,14 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
       );
       
       if (success) {
+        // Save the path for this repository
+        await _storageService.setTargetPath(widget.repository.name, path);
+        
         _showSnackBar('Image uploaded successfully! ✓', isError: false);
-        // Clear form after successful upload
+        // Clear selected image after successful upload
         setState(() {
           _selectedImage = null;
-          _pathController.clear();
+          // Keep the path in the text field for next use
         });
       }
     } catch (e) {
