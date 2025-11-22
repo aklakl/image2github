@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/repository.dart';
 import '../services/github_service.dart';
+import 'repo_files_screen.dart';
 
 class ImageUploadScreen extends StatefulWidget {
   final Repository repository;
@@ -106,9 +107,9 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: SelectableText(
           widget.repository.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
         elevation: 0,
@@ -122,11 +123,12 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+      body: SelectionArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             // Repository info card
             Card(
               elevation: 2,
@@ -165,13 +167,37 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Branch: ${widget.repository.defaultBranch}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                        fontStyle: FontStyle.italic,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Branch: ${widget.repository.defaultBranch}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                        TextButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RepoFilesScreen(
+                                  repository: widget.repository,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.folder_open, size: 16),
+                          label: const Text('Browse Files'),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -320,6 +346,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }

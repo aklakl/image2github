@@ -102,4 +102,21 @@ class GitHubService {
       throw Exception('Error uploading file: $e');
     }
   }
+
+  /// Fetch contents of a repository path
+  Future<List<Map<String, dynamic>>> fetchRepoContents(String owner, String repo, String path) async {
+    try {
+      final url = Uri.parse('$_baseUrl/repos/$owner/$repo/contents/$path');
+      final response = await http.get(url, headers: _headers);
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception('Failed to fetch contents: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching contents: $e');
+    }
+  }
 }
