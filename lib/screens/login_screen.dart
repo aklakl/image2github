@@ -55,10 +55,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _initDeepLinkListener() async {
-    _sub = _authService.deepLinkStream.listen((String? link) {
-      if (link != null) {
-        _handleDeepLink(link);
-      }
+    _sub = _authService.deepLinkStream.listen((Uri uri) {
+      _handleDeepLink(uri);
     }, onError: (err) {
       setState(() {
         _errorMessage = 'Deep link error: $err';
@@ -66,8 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  Future<void> _handleDeepLink(String link) async {
-    final uri = Uri.parse(link);
+  Future<void> _handleDeepLink(Uri uri) async {
     final code = uri.queryParameters['code'];
     
     if (code != null) {

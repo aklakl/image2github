@@ -4,16 +4,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart';
 import '../config/constants.dart';
 
 class AuthService {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final AppLinks _appLinks = AppLinks();
   static const String _tokenKey = 'github_token';
   static const String _usernameKey = 'github_username';
 
   // Initialize deep link listener
-  Stream<String?> get deepLinkStream => linkStream;
+  Stream<Uri> get deepLinkStream => _appLinks.uriLinkStream;
 
   // Get platform-specific redirect URI
   String get _redirectUri {
