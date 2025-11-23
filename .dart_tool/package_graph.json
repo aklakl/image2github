@@ -11,6 +11,7 @@
         "cupertino_icons",
         "file_picker",
         "flutter",
+        "flutter_highlight",
         "flutter_secure_storage",
         "http",
         "image_picker",
@@ -45,6 +46,14 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "flutter_highlight",
+      "version": "0.7.0",
+      "dependencies": [
+        "flutter",
+        "highlight"
       ]
     },
     {
@@ -240,6 +249,13 @@
         "stream_channel",
         "string_scanner",
         "term_glyph"
+      ]
+    },
+    {
+      "name": "highlight",
+      "version": "0.7.0",
+      "dependencies": [
+        "collection"
       ]
     },
     {

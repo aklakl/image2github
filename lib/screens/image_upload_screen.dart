@@ -204,6 +204,12 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                               MaterialPageRoute(
                                 builder: (context) => RepoFilesScreen(
                                   repository: widget.repository,
+                                  fromUploadScreen: true,
+                                  onPathSelected: (path) {
+                                    setState(() {
+                                      _pathController.text = path;
+                                    });
+                                  },
                                 ),
                               ),
                             );

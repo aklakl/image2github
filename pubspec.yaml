@@ -25,6 +25,9 @@ dependencies:
   url_launcher: ^6.3.2
   flutter_secure_storage: ^9.2.4
   app_links: ^6.3.3
+  
+  # Code syntax highlighting
+  flutter_highlight: ^0.7.0
 
 dev_dependencies:
   flutter_test:

@@ -122,6 +122,12 @@
       "languageVersion": "3.8"
     },
     {
+      "name": "flutter_highlight",
+      "rootUri": "file:///C:/Users/mingl/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_highlight-0.7.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "flutter_lints",
       "rootUri": "file:///C:/Users/mingl/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_lints-3.0.2",
       "packageUri": "lib/",
@@ -186,6 +192,12 @@
       "rootUri": "file:///C:/Users/mingl/AppData/Local/Pub/Cache/hosted/pub.dev/gtk-2.1.0",
       "packageUri": "lib/",
       "languageVersion": "3.0"
+    },
+    {
+      "name": "highlight",
+      "rootUri": "file:///C:/Users/mingl/AppData/Local/Pub/Cache/hosted/pub.dev/highlight-0.7.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
     },
     {
       "name": "http",

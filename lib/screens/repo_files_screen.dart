@@ -3,15 +3,20 @@ import 'package:flutter/services.dart';
 import '../models/repository.dart';
 import '../models/github_file.dart';
 import '../services/github_service.dart';
+import 'file_viewer_screen.dart';
 
 class RepoFilesScreen extends StatefulWidget {
   final Repository repository;
   final String path;
+  final bool fromUploadScreen;
+  final Function(String)? onPathSelected;
 
   const RepoFilesScreen({
     super.key,
     required this.repository,
     this.path = '',
+    this.fromUploadScreen = false,
+    this.onPathSelected,
   });
 
   @override
@@ -72,13 +77,28 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
           builder: (context) => RepoFilesScreen(
             repository: widget.repository,
             path: file.path,
+            fromUploadScreen: widget.fromUploadScreen,
+            onPathSelected: widget.onPathSelected,
           ),
         ),
       );
     } else {
-      // For now, just show a snackbar for files
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('File: ${file.name}')),
+      // Open file viewer
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FileViewerScreen(
+            file: file,
+            repository: widget.repository,
+            onCopyPathForUpload: widget.fromUploadScreen
+                ? () {
+                    if (widget.onPathSelected != null) {
+                      widget.onPathSelected!(file.path);
+                    }
+                  }
+                : null,
+          ),
+        ),
       );
     }
   }
@@ -163,6 +183,13 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
             children: [
               if (!file.isDirectory)
                 IconButton(
+                  icon: const Icon(Icons.visibility, size: 20),
+                  onPressed: () => _onFileTapped(file),
+                  tooltip: 'View file',
+                  color: Colors.deepPurple,
+                ),
+              if (!file.isDirectory)
+                IconButton(
                   icon: const Icon(Icons.copy, size: 20),
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: file.path));
@@ -174,6 +201,18 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
                     );
                   },
                   tooltip: 'Copy file path',
+                ),
+              if (!file.isDirectory && widget.fromUploadScreen)
+                IconButton(
+                  icon: const Icon(Icons.upload_file, size: 20),
+                  onPressed: () {
+                    if (widget.onPathSelected != null) {
+                      widget.onPathSelected!(file.path);
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  tooltip: 'Use for upload',
+                  color: Colors.green,
                 ),
               if (file.isDirectory)
                 const Icon(Icons.chevron_right),
