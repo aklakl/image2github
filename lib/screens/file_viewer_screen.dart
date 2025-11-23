@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -23,13 +24,13 @@ class FileViewerScreen extends StatefulWidget {
   @override
   State<FileViewerScreen> createState() => _FileViewerScreenState();
 }
-
 class _FileViewerScreenState extends State<FileViewerScreen> {
   final AuthService _authService = AuthService();
   String? _fileContent;
   bool _isLoading = true;
   String? _errorMessage;
-  bool _isDarkMode = false;
+  bool _isDarkMode = true;
+  bool _isRawMode = false;
 
   @override
   void initState() {
@@ -44,26 +45,52 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
     });
 
     try {
-      if (widget.file.downloadUrl == null) {
-        throw Exception('File download URL not available');
+      // For image files, we don't need to fetch and decode content
+      // Just mark as loaded and use download_url for display
+      if (_isImageFile) {
+        setState(() {
+          _fileContent = 'IMAGE'; // Just a marker, not actually used for display
+          _isLoading = false;
+        });
+        return;
       }
 
+      // For text/code files, use GitHub API to avoid CORS issues on web
       final token = await _authService.getToken();
+      final apiUrl = 'https://api.github.com/repos/${widget.repository.ownerLogin}/${widget.repository.name}/contents/${widget.file.path}';
+      
       final response = await http.get(
-        Uri.parse(widget.file.downloadUrl!),
+        Uri.parse(apiUrl),
         headers: {
           'Authorization': 'Bearer $token',
-          'Accept': 'application/vnd.github.v3.raw',
+          'Accept': 'application/vnd.github.v3+json',
         },
       );
 
       if (response.statusCode == 200) {
-        setState(() {
-          _fileContent = response.body;
-          _isLoading = false;
-        });
+        final data = json.decode(response.body);
+        
+        // GitHub API returns content as base64 for files
+        if (data['encoding'] == 'base64' && data['content'] != null) {
+          // Decode base64 content
+          String base64Content = data['content'].toString().replaceAll('\n', '');
+          final decodedBytes = base64.decode(base64Content);
+          
+          try {
+            // Try to decode as UTF-8 text
+            final decodedContent = utf8.decode(decodedBytes);
+            setState(() {
+              _fileContent = decodedContent;
+              _isLoading = false;
+            });
+          } catch (e) {
+            throw Exception('Unable to decode file as text. This might be a binary file.');
+          }
+        } else {
+          throw Exception('Unexpected content encoding');
+        }
       } else {
-        throw Exception('Failed to load file: ${response.statusCode}');
+        throw Exception('Failed to load file: ${response.statusCode}\n${response.body}');
       }
     } catch (e) {
       setState(() {
@@ -124,10 +151,22 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
     );
   }
 
+  void _copyContent() {
+    if (_fileContent != null) {
+      Clipboard.setData(ClipboardData(text: _fileContent!));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('File content copied to clipboard!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   void _copyPathAndNavigateBack() {
     if (widget.onCopyPathForUpload != null) {
       widget.onCopyPathForUpload!();
-      Navigator.of(context).popUntil((route) => route.isFirst || route.settings.name == '/upload');
+      // Navigation is now handled by the callback
     }
   }
 
@@ -143,6 +182,16 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
           ),
         ),
         actions: [
+          if (!_isImageFile)
+            IconButton(
+              icon: Icon(_isRawMode ? Icons.code : Icons.text_fields, color: Colors.white),
+              onPressed: () {
+                setState(() {
+                  _isRawMode = !_isRawMode;
+                });
+              },
+              tooltip: _isRawMode ? 'Show highlighted' : 'Show raw text',
+            ),
           if (!_isImageFile)
             IconButton(
               icon: Icon(_isDarkMode ? Icons.light_mode : Icons.dark_mode, color: Colors.white),
@@ -241,6 +290,8 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
                         const Icon(Icons.broken_image, size: 64, color: Colors.grey),
                         const SizedBox(height: 16),
                         Text('Failed to load image', style: TextStyle(color: Colors.grey.shade700)),
+                        const SizedBox(height: 8),
+                        Text('Error: $error', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                       ],
                     );
                   },
@@ -308,6 +359,15 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
                   ),
                 ),
                 const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.copy_all, size: 20),
+                  onPressed: _copyContent,
+                  tooltip: 'Copy all code',
+                  color: Colors.grey.shade700,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const SizedBox(width: 16),
                 Text(
                   '${_fileContent!.split('\n').length} lines',
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
@@ -316,20 +376,29 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
             ),
           ),
           Expanded(
-            child: SelectionArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: HighlightView(
-                  _fileContent!,
-                  language: language,
-                  theme: theme,
-                  padding: const EdgeInsets.all(12),
-                  textStyle: const TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 14,
-                  ),
-                ),
-              ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: _isRawMode
+                  ? SelectableText(
+                      _fileContent!,
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 14,
+                        color: _isDarkMode ? Colors.white : Colors.black,
+                      ),
+                    )
+                  : SelectionArea(
+                      child: HighlightView(
+                        _fileContent!,
+                        language: language,
+                        theme: theme,
+                        padding: const EdgeInsets.all(12),
+                        textStyle: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
             ),
           ),
         ],

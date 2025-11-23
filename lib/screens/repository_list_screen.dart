@@ -103,6 +103,7 @@ class _RepositoryListScreenState extends State<RepositoryListScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
+        settings: const RouteSettings(name: 'repo_files'),
         builder: (context) => RepoFilesScreen(repository: repository),
       ),
     );

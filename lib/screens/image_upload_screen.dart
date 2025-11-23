@@ -8,10 +8,12 @@ import 'repo_files_screen.dart';
 
 class ImageUploadScreen extends StatefulWidget {
   final Repository repository;
+  final String? initialPath;
   
   const ImageUploadScreen({
     super.key,
     required this.repository,
+    this.initialPath,
   });
   
   @override
@@ -34,6 +36,11 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
   }
   
   Future<void> _loadSavedPath() async {
+    if (widget.initialPath != null && widget.initialPath!.isNotEmpty) {
+      _pathController.text = widget.initialPath!;
+      return;
+    }
+
     await _storageService.init();
     final savedPath = _storageService.getTargetPath(widget.repository.name);
     if (savedPath.isNotEmpty) {
@@ -131,6 +138,13 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: 'Close',
+          ),
+        ],
         elevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
@@ -202,6 +216,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
+                                settings: const RouteSettings(name: 'repo_files'),
                                 builder: (context) => RepoFilesScreen(
                                   repository: widget.repository,
                                   fromUploadScreen: true,

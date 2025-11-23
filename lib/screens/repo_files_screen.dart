@@ -4,6 +4,7 @@ import '../models/repository.dart';
 import '../models/github_file.dart';
 import '../services/github_service.dart';
 import 'file_viewer_screen.dart';
+import 'image_upload_screen.dart';
 
 class RepoFilesScreen extends StatefulWidget {
   final Repository repository;
@@ -74,6 +75,7 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
+          settings: const RouteSettings(name: 'repo_files'),
           builder: (context) => RepoFilesScreen(
             repository: widget.repository,
             path: file.path,
@@ -87,16 +89,34 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
+          settings: const RouteSettings(name: 'repo_files'), // Also mark viewer as part of file browsing
           builder: (context) => FileViewerScreen(
             file: file,
             repository: widget.repository,
-            onCopyPathForUpload: widget.fromUploadScreen
-                ? () {
-                    if (widget.onPathSelected != null) {
-                      widget.onPathSelected!(file.path);
-                    }
-                  }
-                : null,
+            onCopyPathForUpload: () => _selectPathForUpload(file.path),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _selectPathForUpload(String path) {
+    if (widget.onPathSelected != null) {
+      // Case 1: Came from Upload Screen
+      widget.onPathSelected!(path);
+      // Pop until we find a route that is NOT 'repo_files'
+      Navigator.of(context).popUntil((route) {
+        return route.settings.name != 'repo_files';
+      });
+    } else {
+      // Case 2: Came from Repository List (Browse mode)
+      // Navigate to ImageUploadScreen with the selected path
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ImageUploadScreen(
+            repository: widget.repository,
+            initialPath: path,
           ),
         ),
       );
@@ -114,7 +134,11 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              Navigator.of(context).popUntil((route) {
+                return route.settings.name != 'repo_files';
+              });
+            },
             tooltip: 'Close',
           ),
         ],
@@ -202,15 +226,10 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
                   },
                   tooltip: 'Copy file path',
                 ),
-              if (!file.isDirectory && widget.fromUploadScreen)
+              if (!file.isDirectory)
                 IconButton(
                   icon: const Icon(Icons.upload_file, size: 20),
-                  onPressed: () {
-                    if (widget.onPathSelected != null) {
-                      widget.onPathSelected!(file.path);
-                      Navigator.of(context).pop();
-                    }
-                  },
+                  onPressed: () => _selectPathForUpload(file.path),
                   tooltip: 'Use for upload',
                   color: Colors.green,
                 ),

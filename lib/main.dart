@@ -5,6 +5,8 @@ import 'screens/repository_list_screen.dart';
 import 'services/auth_service.dart';
 
 void main() {
+  // Enable browser context menu for right-click copy/paste on web
+  BrowserContextMenu.enableContextMenu();
   runApp(const Image2GitHubApp());
 }
 
