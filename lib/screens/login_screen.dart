@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'dart:html' as html show window;
 import '../services/auth_service.dart';
 import '../services/github_service.dart';
 import 'repository_list_screen.dart';
+
+// Conditional import for web-only dart:html
+import 'package:image2github/utils/html_stub.dart'
+    if (dart.library.html) 'dart:html' as html;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
