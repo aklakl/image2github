@@ -320,6 +320,18 @@
       "languageVersion": "3.8"
     },
     {
+      "name": "package_info_plus",
+      "rootUri": "file:///C:/Users/mingl/AppData/Local/Pub/Cache/hosted/pub.dev/package_info_plus-9.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "package_info_plus_platform_interface",
+      "rootUri": "file:///C:/Users/mingl/AppData/Local/Pub/Cache/hosted/pub.dev/package_info_plus_platform_interface-3.2.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
+    },
+    {
       "name": "path",
       "rootUri": "file:///C:/Users/mingl/AppData/Local/Pub/Cache/hosted/pub.dev/path-1.9.1",
       "packageUri": "lib/",

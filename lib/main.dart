@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/login_screen.dart';
-import 'screens/repository_list_screen.dart';
+
 import 'services/auth_service.dart';
+
+import 'screens/main_screen.dart';
 
 void main() {
   // Enable browser context menu for right-click copy/paste on web
@@ -60,7 +62,7 @@ class _Image2GitHubAppState extends State<Image2GitHubApp> {
               body: Center(child: CircularProgressIndicator()),
             )
           : _isLoggedIn
-              ? const RepositoryListScreen()
+              ? const MainScreen()
               : const LoginScreen(),
       debugShowCheckedModeBanner: false,
     );

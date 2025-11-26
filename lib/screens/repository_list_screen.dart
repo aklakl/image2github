@@ -114,15 +114,7 @@ class _RepositoryListScreenState extends State<RepositoryListScreen> {
     _filterAndSortRepositories();
   }
 
-  Future<void> _logout() async {
-    final authService = AuthService();
-    await authService.logout();
-    if (mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
-    }
-  }
+
   
   @override
   Widget build(BuildContext context) {
@@ -134,13 +126,6 @@ class _RepositoryListScreenState extends State<RepositoryListScreen> {
         ),
         centerTitle: true,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: _logout,
-            tooltip: 'Logout',
-          ),
-        ],
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

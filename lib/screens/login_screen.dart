@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/github_service.dart';
-import 'repository_list_screen.dart';
+import 'main_screen.dart';
 
 // Conditional import for web-only dart:html
 import 'package:image2github/utils/html_stub.dart'
@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
           if (mounted) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const RepositoryListScreen()),
+              MaterialPageRoute(builder: (context) => const MainScreen()),
             );
           }
         } else {
@@ -146,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const RepositoryListScreen()),
+            MaterialPageRoute(builder: (context) => const MainScreen()),
           );
         }
       } else {
