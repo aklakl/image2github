@@ -9,11 +9,13 @@ import 'repo_files_screen.dart';
 class ImageUploadScreen extends StatefulWidget {
   final Repository repository;
   final String? initialPath;
+  final String? branch;
   
   const ImageUploadScreen({
     super.key,
     required this.repository,
     this.initialPath,
+    this.branch,
   });
   
   @override
@@ -28,10 +30,16 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
   
   File? _selectedImage;
   bool _isUploading = false;
+
+  List<String> _branches = [];
+  String? _selectedBranch;
+  bool _isLoadingBranches = true;
   
   @override
   void initState() {
     super.initState();
+    _selectedBranch = widget.branch ?? widget.repository.defaultBranch;
+    _loadBranches();
     _loadSavedPath();
   }
   
@@ -45,6 +53,27 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
     final savedPath = _storageService.getTargetPath(widget.repository.name);
     if (savedPath.isNotEmpty) {
       _pathController.text = savedPath;
+    }
+  }
+
+  Future<void> _loadBranches() async {
+    setState(() {
+      _isLoadingBranches = true;
+    });
+    try {
+      final branches = await _githubService.fetchBranches(
+        widget.repository.ownerLogin,
+        widget.repository.name,
+      );
+      setState(() {
+        _branches = branches;
+        _isLoadingBranches = false;
+      });
+    } catch (e) {
+      // Handle error silently for now
+      setState(() {
+        _isLoadingBranches = false;
+      });
     }
   }
   
@@ -96,6 +125,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         filePath: path,
         fileBytes: imageBytes,
         commitMessage: 'Upload image via Image2GitHub app',
+        branch: _selectedBranch,
       );
       
       if (success) {
@@ -203,14 +233,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Branch: ${widget.repository.defaultBranch}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
+                        _buildBranchSelector(),
                         TextButton.icon(
                           onPressed: () {
                             Navigator.push(
@@ -225,6 +248,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                                       _pathController.text = path;
                                     });
                                   },
+                                  branch: _selectedBranch,
                                 ),
                               ),
                             );
@@ -388,5 +412,45 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
       ),
     ),
   );
+  }
+
+  Widget _buildBranchSelector() {
+    if (_isLoadingBranches) {
+      return const SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+
+    if (_branches.isEmpty) {
+      return Text(
+        'Branch: $_selectedBranch',
+        style: TextStyle(
+          fontSize: 12,
+          color: Colors.grey.shade600,
+          fontStyle: FontStyle.italic,
+        ),
+      );
+    }
+
+    return DropdownButton<String>(
+      value: _selectedBranch,
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          setState(() {
+            _selectedBranch = newValue;
+          });
+        }
+      },
+      items: _branches.map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value, style: const TextStyle(fontSize: 12)),
+        );
+      }).toList(),
+      icon: const Icon(Icons.arrow_drop_down, size: 16),
+      underline: Container(),
+    );
   }
 }

@@ -11,6 +11,7 @@ class RepoFilesScreen extends StatefulWidget {
   final String path;
   final bool fromUploadScreen;
   final Function(String)? onPathSelected;
+  final String? branch;
 
   const RepoFilesScreen({
     super.key,
@@ -18,6 +19,7 @@ class RepoFilesScreen extends StatefulWidget {
     this.path = '',
     this.fromUploadScreen = false,
     this.onPathSelected,
+    this.branch,
   });
 
   @override
@@ -30,13 +32,42 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
   bool _isLoading = true;
   String? _errorMessage;
 
+  List<String> _branches = [];
+  String? _selectedBranch;
+  bool _isLoadingBranches = true;
+
   @override
   void initState() {
     super.initState();
+    _selectedBranch = widget.branch ?? widget.repository.defaultBranch;
+    _loadBranches();
     _loadFiles();
   }
 
+  Future<void> _loadBranches() async {
+    setState(() {
+      _isLoadingBranches = true;
+    });
+    try {
+      final branches = await _githubService.fetchBranches(
+        widget.repository.ownerLogin,
+        widget.repository.name,
+      );
+      setState(() {
+        _branches = branches;
+        _isLoadingBranches = false;
+      });
+    } catch (e) {
+      // Handle error silently for now
+      setState(() {
+        _isLoadingBranches = false;
+      });
+    }
+  }
+
   Future<void> _loadFiles() async {
+    if (_selectedBranch == null) return;
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -47,6 +78,7 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
         widget.repository.ownerLogin,
         widget.repository.name,
         widget.path,
+        _selectedBranch!,
       );
       
       final files = contents.map((json) => GitHubFile.fromJson(json)).toList();
@@ -81,6 +113,7 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
             path: file.path,
             fromUploadScreen: widget.fromUploadScreen,
             onPathSelected: widget.onPathSelected,
+            branch: _selectedBranch,
           ),
         ),
       );
@@ -117,6 +150,7 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
           builder: (context) => ImageUploadScreen(
             repository: widget.repository,
             initialPath: path,
+            branch: _selectedBranch,
           ),
         ),
       );
@@ -127,11 +161,22 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: SelectableText(
-          widget.path.isEmpty ? widget.repository.name : widget.path.split('/').last,
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SelectableText(
+              widget.path.isEmpty ? widget.repository.name : widget.path.split('/').last,
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+            ),
+            if (_selectedBranch != null)
+              Text(
+                'Branch: $_selectedBranch',
+                style: const TextStyle(fontSize: 12, color: Colors.white70),
+              ),
+          ],
         ),
         actions: [
+          _buildBranchSelector(),
           IconButton(
             icon: const Icon(Icons.close, color: Colors.white),
             onPressed: () {
@@ -153,6 +198,45 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
         ),
       ),
       body: SelectionArea(child: _buildBody()),
+    );
+  }
+
+  Widget _buildBranchSelector() {
+    if (_isLoadingBranches) {
+      return const Padding(
+        padding: EdgeInsets.all(8.0),
+        child: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+        ),
+      );
+    }
+
+    if (_branches.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return DropdownButton<String>(
+      value: _selectedBranch,
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          setState(() {
+            _selectedBranch = newValue;
+          });
+          _loadFiles();
+        }
+      },
+      items: _branches.map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value, style: const TextStyle(color: Colors.black)),
+        );
+      }).toList(),
+      icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+      style: const TextStyle(color: Colors.white, fontSize: 14),
+      underline: Container(),
+      dropdownColor: Colors.white,
     );
   }
 

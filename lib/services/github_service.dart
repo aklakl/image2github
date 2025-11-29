@@ -76,18 +76,21 @@ class GitHubService {
     required String filePath,
     required List<int> fileBytes,
     String? commitMessage,
+    String? branch,
   }) async {
     await _ensureCredentials();
     try {
       // Encode file to base64
       final base64Content = base64Encode(fileBytes);
       
+      final targetBranch = branch ?? repository.defaultBranch;
+
       // Check if file already exists to get SHA
       final existingSha = await _getFileSha(
         repository.ownerLogin,
         repository.name,
         filePath,
-        repository.defaultBranch,
+        targetBranch,
       );
       
       final url = Uri.parse(
@@ -97,7 +100,7 @@ class GitHubService {
       final body = {
         'message': commitMessage ?? 'Upload image via Image2GitHub app',
         'content': base64Content,
-        'branch': repository.defaultBranch,
+        'branch': targetBranch,
       };
       
       // Include SHA if file exists (for update)
@@ -122,10 +125,10 @@ class GitHubService {
   }
 
   /// Fetch contents of a repository path
-  Future<List<Map<String, dynamic>>> fetchRepoContents(String owner, String repo, String path) async {
+  Future<List<Map<String, dynamic>>> fetchRepoContents(String owner, String repo, String path, String branch) async {
     await _ensureCredentials();
     try {
-      final url = Uri.parse('$_baseUrl/repos/$owner/$repo/contents/$path');
+      final url = Uri.parse('$_baseUrl/repos/$owner/$repo/contents/$path?ref=$branch');
       final response = await http.get(url, headers: _headers);
       
       if (response.statusCode == 200) {
@@ -136,6 +139,24 @@ class GitHubService {
       }
     } catch (e) {
       throw Exception('Error fetching contents: $e');
+    }
+  }
+
+  /// Fetch all branches for a repository
+  Future<List<String>> fetchBranches(String owner, String repo) async {
+    await _ensureCredentials();
+    try {
+      final url = Uri.parse('$_baseUrl/repos/$owner/$repo/branches');
+      final response = await http.get(url, headers: _headers);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = json.decode(response.body);
+        return jsonData.map((branch) => branch['name'] as String).toList();
+      } else {
+        throw Exception('Failed to fetch branches: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching branches: $e');
     }
   }
 }
