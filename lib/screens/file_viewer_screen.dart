@@ -217,7 +217,7 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.deepPurple.shade700, Colors.deepPurple.shade400],
+              colors: [Colors.blue.shade700, Colors.blue.shade400],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),

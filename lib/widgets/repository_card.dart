@@ -36,8 +36,8 @@ class RepositoryCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(
               colors: [
-                Colors.deepPurple.shade700,
-                Colors.deepPurple.shade500,
+                Colors.blue.shade700,
+                Colors.blue.shade500,
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,

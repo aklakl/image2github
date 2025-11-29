@@ -80,7 +80,7 @@ class _MeScreenState extends State<MeScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.deepPurple.shade700, Colors.deepPurple.shade400],
+              colors: [Colors.blue.shade700, Colors.blue.shade400],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -125,7 +125,7 @@ class _MeScreenState extends State<MeScreen> {
             children: [
               Icon(
                 icon,
-                color: isDestructive ? Colors.red : Colors.deepPurple,
+                color: isDestructive ? Colors.red : Colors.blue,
                 size: 28,
               ),
               const SizedBox(width: 16),

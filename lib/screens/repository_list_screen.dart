@@ -129,7 +129,7 @@ class _RepositoryListScreenState extends State<RepositoryListScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.deepPurple.shade700, Colors.deepPurple.shade400],
+              colors: [Colors.blue.shade700, Colors.blue.shade400],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -144,7 +144,7 @@ class _RepositoryListScreenState extends State<RepositoryListScreen> {
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
                 hintText: 'Search repositories...',
-                prefixIcon: const Icon(Icons.search, color: Colors.deepPurple),
+                prefixIcon: const Icon(Icons.search, color: Colors.blue),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -173,7 +173,7 @@ class _RepositoryListScreenState extends State<RepositoryListScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple),
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
             ),
             SizedBox(height: 16),
             Text(
@@ -218,7 +218,7 @@ class _RepositoryListScreenState extends State<RepositoryListScreen> {
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
+                  backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),

@@ -145,7 +145,7 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.deepPurple.shade700, Colors.deepPurple.shade400],
+              colors: [Colors.blue.shade700, Colors.blue.shade400],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -210,7 +210,7 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
                   icon: const Icon(Icons.visibility, size: 20),
                   onPressed: () => _onFileTapped(file),
                   tooltip: 'View file',
-                  color: Colors.deepPurple,
+                  color: Colors.blue,
                 ),
               if (!file.isDirectory)
                 IconButton(

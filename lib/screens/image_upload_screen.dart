@@ -149,7 +149,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.deepPurple.shade700, Colors.deepPurple.shade400],
+              colors: [Colors.blue.shade700, Colors.blue.shade400],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -177,7 +177,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                       children: [
                         Icon(
                           widget.repository.isPrivate ? Icons.lock : Icons.folder_outlined,
-                          color: Colors.deepPurple,
+                          color: Colors.blue,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -265,7 +265,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                   color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Colors.deepPurple.shade200,
+                    color: Colors.blue.shade200,
                     width: 2,
                     style: BorderStyle.solid,
                   ),
@@ -284,7 +284,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                           Icon(
                             Icons.add_photo_alternate,
                             size: 64,
-                            color: Colors.deepPurple.shade300,
+                            color: Colors.blue.shade300,
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -317,7 +317,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
               enabled: !_isUploading,
               decoration: InputDecoration(
                 hintText: 'e.g., images/logo.png',
-                prefixIcon: Icon(Icons.file_present, color: Colors.deepPurple.shade400),
+                prefixIcon: Icon(Icons.file_present, color: Colors.blue.shade400),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -327,7 +327,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.deepPurple.shade400, width: 2),
+                  borderSide: BorderSide(color: Colors.blue.shade400, width: 2),
                 ),
                 filled: true,
                 fillColor: Colors.grey.shade50,
@@ -351,7 +351,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
             ElevatedButton(
               onPressed: _isUploading ? null : _uploadImage,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
+                backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(

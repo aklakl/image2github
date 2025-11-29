@@ -166,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.deepPurple.shade800, Colors.deepPurple.shade500],
+            colors: [Colors.blue.shade800, Colors.blue.shade500],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -230,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       label: const Text('Login with Token'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        foregroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.blue,
                         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                         textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         shape: RoundedRectangleBorder(
@@ -254,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         });
                       },
                       activeColor: Colors.white,
-                      checkColor: Colors.deepPurple,
+                      checkColor: Colors.blue,
                       tileColor: Colors.white.withOpacity(0.1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -284,7 +284,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       label: const Text('Login with GitHub'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
-                        foregroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.blue,
                         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                         textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         shape: RoundedRectangleBorder(
@@ -308,7 +308,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         });
                       },
                       activeColor: Colors.white,
-                      checkColor: Colors.deepPurple,
+                      checkColor: Colors.blue,
                       tileColor: Colors.white.withOpacity(0.1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),

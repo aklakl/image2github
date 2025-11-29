@@ -46,7 +46,7 @@ class _Image2GitHubAppState extends State<Image2GitHubApp> {
     return MaterialApp(
       title: 'Image2GitHub',
       theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
+        primarySwatch: Colors.blue,
         useMaterial3: true,
         cardTheme: CardThemeData(
           elevation: 4,
