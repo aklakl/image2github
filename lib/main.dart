@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'screens/login_screen.dart';
@@ -8,7 +9,9 @@ import 'screens/main_screen.dart';
 
 void main() {
   // Enable browser context menu for right-click copy/paste on web
-  BrowserContextMenu.enableContextMenu();
+  if (kIsWeb) {
+    BrowserContextMenu.enableContextMenu();
+  }
   runApp(const Image2GitHubApp());
 }
 
