@@ -36,6 +36,10 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
   String? _selectedBranch;
   bool _isLoadingBranches = true;
 
+  // New state for multi-selection
+  final Set<GitHubFile> _selectedFiles = {};
+  bool _isSelectionMode = false;
+
   @override
   void initState() {
     super.initState();
@@ -83,7 +87,6 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
       
       final files = contents.map((json) => GitHubFile.fromJson(json)).toList();
       
-      // Sort: Directories first, then files
       files.sort((a, b) {
         if (a.isDirectory && !b.isDirectory) return -1;
         if (!a.isDirectory && b.isDirectory) return 1;
@@ -101,8 +104,13 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
       });
     }
   }
-
+  
   void _onFileTapped(GitHubFile file) {
+    if (_isSelectionMode) {
+      _toggleFileSelection(file);
+      return;
+    }
+
     if (file.isDirectory) {
       Navigator.push(
         context,
@@ -118,11 +126,10 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
         ),
       );
     } else {
-      // Open file viewer
       Navigator.push(
         context,
         MaterialPageRoute(
-          settings: const RouteSettings(name: 'repo_files'), // Also mark viewer as part of file browsing
+          settings: const RouteSettings(name: 'repo_files'),
           builder: (context) => FileViewerScreen(
             file: file,
             repository: widget.repository,
@@ -132,18 +139,41 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
       );
     }
   }
+  
+  void _onFileLongPressed(GitHubFile file) {
+    if (!_isSelectionMode) {
+      setState(() {
+        _isSelectionMode = true;
+      });
+    }
+    _toggleFileSelection(file);
+  }
 
+  void _toggleFileSelection(GitHubFile file) {
+    setState(() {
+      if (_selectedFiles.contains(file)) {
+        _selectedFiles.remove(file);
+      } else {
+        _selectedFiles.add(file);
+      }
+      if (_selectedFiles.isEmpty) {
+        _isSelectionMode = false;
+      }
+    });
+  }
+
+  void _cancelSelectionMode() {
+    setState(() {
+      _isSelectionMode = false;
+      _selectedFiles.clear();
+    });
+  }
+  
   void _selectPathForUpload(String path) {
     if (widget.onPathSelected != null) {
-      // Case 1: Came from Upload Screen
       widget.onPathSelected!(path);
-      // Pop until we find a route that is NOT 'repo_files'
-      Navigator.of(context).popUntil((route) {
-        return route.settings.name != 'repo_files';
-      });
+      Navigator.of(context).popUntil((route) => route.settings.name != 'repo_files');
     } else {
-      // Case 2: Came from Repository List (Browse mode)
-      // Navigate to ImageUploadScreen with the selected path
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -157,50 +187,143 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
     }
   }
 
+  Future<void> _deleteSelectedFiles() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Files'),
+        content: Text('Are you sure you want to delete ${_selectedFiles.length} file(s)? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _githubService.deleteFiles(
+        owner: widget.repository.ownerLogin,
+        repo: widget.repository.name,
+        files: _selectedFiles.toList(),
+        branch: _selectedBranch!,
+      );
+      
+      setState(() {
+        _isSelectionMode = false;
+        _selectedFiles.clear();
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Files deleted successfully.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      
+      await _loadFiles();
+      
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting files: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+        _cancelSelectionMode();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SelectableText(
-              widget.path.isEmpty ? widget.repository.name : widget.path.split('/').last,
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
-            ),
-            if (_selectedBranch != null)
-              Text(
-                'Branch: $_selectedBranch',
-                style: const TextStyle(fontSize: 12, color: Colors.white70),
-              ),
-          ],
-        ),
-        actions: [
-          _buildBranchSelector(),
-          IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () {
-              Navigator.of(context).popUntil((route) {
-                return route.settings.name != 'repo_files';
-              });
-            },
-            tooltip: 'Close',
-          ),
-        ],
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.blue.shade700, Colors.blue.shade400],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-      ),
+      appBar: _isSelectionMode ? _buildSelectionAppBar() : _buildDefaultAppBar(),
       body: SelectionArea(child: _buildBody()),
     );
   }
-
+  
+  AppBar _buildDefaultAppBar() {
+    return AppBar(
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SelectableText(
+            widget.path.isEmpty ? widget.repository.name : widget.path.split('/').last,
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+          ),
+          if (_selectedBranch != null)
+            Text(
+              'Branch: $_selectedBranch',
+              style: const TextStyle(fontSize: 12, color: Colors.white70),
+            ),
+        ],
+      ),
+      actions: [
+        _buildBranchSelector(),
+        IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () {
+            Navigator.of(context).popUntil((route) {
+              return route.settings.name != 'repo_files';
+            });
+          },
+          tooltip: 'Close',
+        ),
+      ],
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.blue.shade700, Colors.blue.shade400],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+      ),
+    );
+  }
+  
+  AppBar _buildSelectionAppBar() {
+    return AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.close, color: Colors.white),
+        onPressed: _cancelSelectionMode,
+        tooltip: 'Cancel',
+      ),
+      title: Text('${_selectedFiles.length} selected', style: const TextStyle(color: Colors.white)),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.delete, color: Colors.white),
+          onPressed: _selectedFiles.isNotEmpty ? _deleteSelectedFiles : null,
+          tooltip: 'Delete Selected Files',
+        ),
+      ],
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.red.shade700, Colors.red.shade400],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+      ),
+    );
+  }
+  
   Widget _buildBranchSelector() {
     if (_isLoadingBranches) {
       return const Padding(
@@ -280,48 +403,58 @@ class _RepoFilesScreenState extends State<RepoFilesScreen> {
       separatorBuilder: (context, index) => const Divider(height: 1),
       itemBuilder: (context, index) {
         final file = _files[index];
+        final isSelected = _selectedFiles.contains(file);
+        
         return ListTile(
-          leading: Icon(
-            file.isDirectory ? Icons.folder : Icons.insert_drive_file,
-            color: file.isDirectory ? Colors.amber : Colors.grey,
-          ),
-          title: Text(file.name),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!file.isDirectory)
-                IconButton(
-                  icon: const Icon(Icons.visibility, size: 20),
-                  onPressed: () => _onFileTapped(file),
-                  tooltip: 'View file',
-                  color: Colors.blue,
-                ),
-              if (!file.isDirectory)
-                IconButton(
-                  icon: const Icon(Icons.copy, size: 20),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: file.path));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('File path copied to clipboard!'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  tooltip: 'Copy file path',
-                ),
-              if (!file.isDirectory)
-                IconButton(
-                  icon: const Icon(Icons.upload_file, size: 20),
-                  onPressed: () => _selectPathForUpload(file.path),
-                  tooltip: 'Use for upload',
-                  color: Colors.green,
-                ),
-              if (file.isDirectory)
-                const Icon(Icons.chevron_right),
-            ],
-          ),
           onTap: () => _onFileTapped(file),
+          onLongPress: () => _onFileLongPressed(file),
+          leading: _isSelectionMode
+              ? Checkbox(
+                  value: isSelected,
+                  onChanged: (bool? value) => _toggleFileSelection(file),
+                )
+              : Icon(
+                  file.isDirectory ? Icons.folder : Icons.insert_drive_file,
+                  color: file.isDirectory ? Colors.amber : Colors.grey,
+                ),
+          title: Text(file.name),
+          selected: isSelected,
+          trailing: _isSelectionMode
+              ? null
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!file.isDirectory)
+                      IconButton(
+                        icon: const Icon(Icons.visibility, size: 20),
+                        onPressed: () => _onFileTapped(file),
+                        tooltip: 'View file',
+                        color: Colors.blue,
+                      ),
+                    if (!file.isDirectory)
+                      IconButton(
+                        icon: const Icon(Icons.copy, size: 20),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: file.path));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('File path copied to clipboard!'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        tooltip: 'Copy file path',
+                      ),
+                    if (!file.isDirectory)
+                      IconButton(
+                        icon: const Icon(Icons.upload_file, size: 20),
+                        onPressed: () => _selectPathForUpload(file.path),
+                        tooltip: 'Use for upload',
+                        color: Colors.green,
+                      ),
+                    if (file.isDirectory) const Icon(Icons.chevron_right),
+                  ],
+                ),
         );
       },
     );

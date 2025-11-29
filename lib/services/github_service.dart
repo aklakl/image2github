@@ -159,4 +159,58 @@ class GitHubService {
       throw Exception('Error fetching branches: $e');
     }
   }
+
+  /// Delete a file in a GitHub repository
+  Future<bool> deleteFile({
+    required String owner,
+    required String repo,
+    required String path,
+    required String sha,
+    required String branch,
+    String? commitMessage,
+  }) async {
+    await _ensureCredentials();
+    try {
+      final url = Uri.parse('$_baseUrl/repos/$owner/$repo/contents/$path');
+      final body = {
+        'message': commitMessage ?? 'Delete file via Image2GitHub app',
+        'sha': sha,
+        'branch': branch,
+      };
+
+      final response = await http.delete(
+        url,
+        headers: _headers,
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('File deletion failed: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error deleting file: $e');
+    }
+  }
+
+  /// Delete multiple files in a GitHub repository
+  Future<void> deleteFiles({
+    required String owner,
+    required String repo,
+    required List<GitHubFile> files,
+    required String branch,
+  }) async {
+    for (final file in files) {
+      if (file.type == 'file') {
+        await deleteFile(
+          owner: owner,
+          repo: repo,
+          path: file.path,
+          sha: file.sha,
+          branch: branch,
+        );
+      }
+    }
+  }
 }
