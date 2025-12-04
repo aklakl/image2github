@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/repository.dart';
-import '../config/constants.dart';
-import 'auth_service.dart';
+import 'package:image2github/models/repository.dart';
+import 'package:image2github/models/github_file.dart';
+import 'package:image2github/config/constants.dart';
+import 'package:image2github/services/auth_service.dart';
 
 class GitHubService {
   final String _baseUrl = AppConfig.githubApiBaseUrl;

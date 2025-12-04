@@ -5,9 +5,9 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/github.dart';
 import 'package:flutter_highlight/themes/dark.dart';
-import '../models/github_file.dart';
-import '../models/repository.dart';
-import '../services/auth_service.dart';
+import 'package:image2github/models/github_file.dart';
+import 'package:image2github/models/repository.dart';
+import 'package:image2github/services/auth_service.dart';
 
 class FileViewerScreen extends StatefulWidget {
   final GitHubFile file;

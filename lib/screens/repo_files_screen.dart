@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../models/repository.dart';
-import '../models/github_file.dart';
-import '../services/github_service.dart';
-import 'file_viewer_screen.dart';
-import 'image_upload_screen.dart';
+import 'package:image2github/models/repository.dart';
+import 'package:image2github/models/github_file.dart';
+import 'package:image2github/services/github_service.dart';
+import 'package:image2github/screens/file_viewer_screen.dart';
+import 'package:image2github/screens/image_upload_screen.dart';
 
 class RepoFilesScreen extends StatefulWidget {
   final Repository repository;
