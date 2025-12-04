@@ -1,13 +1,32 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
-import '../models/repository.dart';
-import '../config/constants.dart';
+import 'package:image2github/models/repository.dart';
+import 'package:image2github/models/github_file.dart';
+import 'package:image2github/config/constants.dart';
+import 'package:image2github/services/auth_service.dart';
 
 class GitHubService {
   final String _baseUrl = AppConfig.githubApiBaseUrl;
-  final String _token = AppConfig.githubToken;
-  final String _username = AppConfig.githubUsername;
+  final AuthService _authService = AuthService();
+  String? _token;
+  String? _username;
+  
+  GitHubService({String? token, String? username}) {
+    _token = token;
+    _username = username;
+  }
+  
+  Future<void> _ensureCredentials() async {
+    if (_token == null) {
+      _token = await _authService.getToken();
+    }
+    if (_username == null) {
+      _username = await _authService.getUsername();
+    }
+    if (_token == null) {
+      throw Exception('Authentication required');
+    }
+  }
   
   // Get authorization headers
   Map<String, String> get _headers => {
@@ -16,10 +35,12 @@ class GitHubService {
     'Content-Type': 'application/json',
   };
   
-  /// Fetch all repositories for the configured user
+  /// Fetch all repositories for the authenticated user
   Future<List<Repository>> fetchRepositories() async {
+    await _ensureCredentials();
     try {
-      final url = Uri.parse('$_baseUrl/users/$_username/repos?per_page=100');
+      // Use /user/repos for authenticated user
+      final url = Uri.parse('$_baseUrl/user/repos?per_page=100&sort=updated');
       final response = await http.get(url, headers: _headers);
       
       if (response.statusCode == 200) {
@@ -35,6 +56,7 @@ class GitHubService {
   
   /// Get file information from repository to check if it exists
   Future<String?> _getFileSha(String owner, String repo, String path, String branch) async {
+    await _ensureCredentials();
     try {
       final url = Uri.parse('$_baseUrl/repos/$owner/$repo/contents/$path?ref=$branch');
       final response = await http.get(url, headers: _headers);
@@ -50,27 +72,26 @@ class GitHubService {
   }
   
   /// Upload or update a file in a GitHub repository
-  /// 
-  /// [repository] - The repository to upload to
-  /// [filePath] - Path in repository where file should be stored (e.g., 'images/logo.png')
-  /// [fileBytes] - The image file bytes
-  /// [commitMessage] - Optional commit message
   Future<bool> uploadFile({
     required Repository repository,
     required String filePath,
     required List<int> fileBytes,
     String? commitMessage,
+    String? branch,
   }) async {
+    await _ensureCredentials();
     try {
       // Encode file to base64
       final base64Content = base64Encode(fileBytes);
       
+      final targetBranch = branch ?? repository.defaultBranch;
+
       // Check if file already exists to get SHA
       final existingSha = await _getFileSha(
         repository.ownerLogin,
         repository.name,
         filePath,
-        repository.defaultBranch,
+        targetBranch,
       );
       
       final url = Uri.parse(
@@ -80,7 +101,7 @@ class GitHubService {
       final body = {
         'message': commitMessage ?? 'Upload image via Image2GitHub app',
         'content': base64Content,
-        'branch': repository.defaultBranch,
+        'branch': targetBranch,
       };
       
       // Include SHA if file exists (for update)
@@ -101,6 +122,96 @@ class GitHubService {
       }
     } catch (e) {
       throw Exception('Error uploading file: $e');
+    }
+  }
+
+  /// Fetch contents of a repository path
+  Future<List<Map<String, dynamic>>> fetchRepoContents(String owner, String repo, String path, String branch) async {
+    await _ensureCredentials();
+    try {
+      final url = Uri.parse('$_baseUrl/repos/$owner/$repo/contents/$path?ref=$branch');
+      final response = await http.get(url, headers: _headers);
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception('Failed to fetch contents: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching contents: $e');
+    }
+  }
+
+  /// Fetch all branches for a repository
+  Future<List<String>> fetchBranches(String owner, String repo) async {
+    await _ensureCredentials();
+    try {
+      final url = Uri.parse('$_baseUrl/repos/$owner/$repo/branches');
+      final response = await http.get(url, headers: _headers);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = json.decode(response.body);
+        return jsonData.map((branch) => branch['name'] as String).toList();
+      } else {
+        throw Exception('Failed to fetch branches: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching branches: $e');
+    }
+  }
+
+  /// Delete a file in a GitHub repository
+  Future<bool> deleteFile({
+    required String owner,
+    required String repo,
+    required String path,
+    required String sha,
+    required String branch,
+    String? commitMessage,
+  }) async {
+    await _ensureCredentials();
+    try {
+      final url = Uri.parse('$_baseUrl/repos/$owner/$repo/contents/$path');
+      final body = {
+        'message': commitMessage ?? 'Delete file via Image2GitHub app',
+        'sha': sha,
+        'branch': branch,
+      };
+
+      final response = await http.delete(
+        url,
+        headers: _headers,
+        body: json.encode(body),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('File deletion failed: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error deleting file: $e');
+    }
+  }
+
+  /// Delete multiple files in a GitHub repository
+  Future<void> deleteFiles({
+    required String owner,
+    required String repo,
+    required List<GitHubFile> files,
+    required String branch,
+  }) async {
+    for (final file in files) {
+      if (file.type == 'file') {
+        await deleteFile(
+          owner: owner,
+          repo: repo,
+          path: file.path,
+          sha: file.sha,
+          branch: branch,
+        );
+      }
     }
   }
 }

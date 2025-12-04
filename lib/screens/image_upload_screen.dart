@@ -3,14 +3,20 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/repository.dart';
 import '../services/github_service.dart';
+import '../services/storage_service.dart';
+import 'repo_files_screen.dart';
 
 class ImageUploadScreen extends StatefulWidget {
   final Repository repository;
+  final String? initialPath;
+  final String? branch;
   
   const ImageUploadScreen({
-    Key? key,
+    super.key,
     required this.repository,
-  }) : super(key: key);
+    this.initialPath,
+    this.branch,
+  });
   
   @override
   State<ImageUploadScreen> createState() => _ImageUploadScreenState();
@@ -18,11 +24,58 @@ class ImageUploadScreen extends StatefulWidget {
 
 class _ImageUploadScreenState extends State<ImageUploadScreen> {
   final GitHubService _githubService = GitHubService();
+  final StorageService _storageService = StorageService();
   final ImagePicker _imagePicker = ImagePicker();
   final TextEditingController _pathController = TextEditingController();
   
   File? _selectedImage;
   bool _isUploading = false;
+
+  List<String> _branches = [];
+  String? _selectedBranch;
+  bool _isLoadingBranches = true;
+  
+  @override
+  void initState() {
+    super.initState();
+    _selectedBranch = widget.branch ?? widget.repository.defaultBranch;
+    _loadBranches();
+    _loadSavedPath();
+  }
+  
+  Future<void> _loadSavedPath() async {
+    if (widget.initialPath != null && widget.initialPath!.isNotEmpty) {
+      _pathController.text = widget.initialPath!;
+      return;
+    }
+
+    await _storageService.init();
+    final savedPath = _storageService.getTargetPath(widget.repository.name);
+    if (savedPath.isNotEmpty) {
+      _pathController.text = savedPath;
+    }
+  }
+
+  Future<void> _loadBranches() async {
+    setState(() {
+      _isLoadingBranches = true;
+    });
+    try {
+      final branches = await _githubService.fetchBranches(
+        widget.repository.ownerLogin,
+        widget.repository.name,
+      );
+      setState(() {
+        _branches = branches;
+        _isLoadingBranches = false;
+      });
+    } catch (e) {
+      // Handle error silently for now
+      setState(() {
+        _isLoadingBranches = false;
+      });
+    }
+  }
   
   @override
   void dispose() {
@@ -72,14 +125,18 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         filePath: path,
         fileBytes: imageBytes,
         commitMessage: 'Upload image via Image2GitHub app',
+        branch: _selectedBranch,
       );
       
       if (success) {
+        // Save the path for this repository
+        await _storageService.setTargetPath(widget.repository.name, path);
+        
         _showSnackBar('Image uploaded successfully! ✓', isError: false);
-        // Clear form after successful upload
+        // Clear selected image after successful upload
         setState(() {
           _selectedImage = null;
-          _pathController.clear();
+          // Keep the path in the text field for next use
         });
       }
     } catch (e) {
@@ -106,27 +163,35 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: SelectableText(
           widget.repository.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white),
+            onPressed: () => Navigator.of(context).pop(),
+            tooltip: 'Close',
+          ),
+        ],
         elevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Colors.deepPurple.shade700, Colors.deepPurple.shade400],
+              colors: [Colors.blue.shade700, Colors.blue.shade400],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+      body: SelectionArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             // Repository info card
             Card(
               elevation: 2,
@@ -142,7 +207,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                       children: [
                         Icon(
                           widget.repository.isPrivate ? Icons.lock : Icons.folder_outlined,
-                          color: Colors.deepPurple,
+                          color: Colors.blue,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -165,13 +230,38 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      'Branch: ${widget.repository.defaultBranch}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                        fontStyle: FontStyle.italic,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildBranchSelector(),
+                        TextButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                settings: const RouteSettings(name: 'repo_files'),
+                                builder: (context) => RepoFilesScreen(
+                                  repository: widget.repository,
+                                  fromUploadScreen: true,
+                                  onPathSelected: (path) {
+                                    setState(() {
+                                      _pathController.text = path;
+                                    });
+                                  },
+                                  branch: _selectedBranch,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.folder_open, size: 16),
+                          label: const Text('Browse Files'),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -199,7 +289,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                   color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Colors.deepPurple.shade200,
+                    color: Colors.blue.shade200,
                     width: 2,
                     style: BorderStyle.solid,
                   ),
@@ -218,7 +308,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                           Icon(
                             Icons.add_photo_alternate,
                             size: 64,
-                            color: Colors.deepPurple.shade300,
+                            color: Colors.blue.shade300,
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -251,7 +341,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
               enabled: !_isUploading,
               decoration: InputDecoration(
                 hintText: 'e.g., images/logo.png',
-                prefixIcon: Icon(Icons.file_present, color: Colors.deepPurple.shade400),
+                prefixIcon: Icon(Icons.file_present, color: Colors.blue.shade400),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -261,7 +351,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.deepPurple.shade400, width: 2),
+                  borderSide: BorderSide(color: Colors.blue.shade400, width: 2),
                 ),
                 filled: true,
                 fillColor: Colors.grey.shade50,
@@ -285,7 +375,7 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
             ElevatedButton(
               onPressed: _isUploading ? null : _uploadImage,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
+                backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -320,6 +410,47 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
           ],
         ),
       ),
+    ),
+  );
+  }
+
+  Widget _buildBranchSelector() {
+    if (_isLoadingBranches) {
+      return const SizedBox(
+        width: 20,
+        height: 20,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
+
+    if (_branches.isEmpty) {
+      return Text(
+        'Branch: $_selectedBranch',
+        style: TextStyle(
+          fontSize: 12,
+          color: Colors.grey.shade600,
+          fontStyle: FontStyle.italic,
+        ),
+      );
+    }
+
+    return DropdownButton<String>(
+      value: _selectedBranch,
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          setState(() {
+            _selectedBranch = newValue;
+          });
+        }
+      },
+      items: _branches.map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value, style: const TextStyle(fontSize: 12)),
+        );
+      }).toList(),
+      icon: const Icon(Icons.arrow_drop_down, size: 16),
+      underline: Container(),
     );
   }
 }

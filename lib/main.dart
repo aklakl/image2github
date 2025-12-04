@@ -1,61 +1,73 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'screens/repository_list_screen.dart';
-import 'config/constants.dart';
+import 'package:flutter/services.dart';
+import 'screens/login_screen.dart';
+
+import 'services/auth_service.dart';
+
+import 'screens/main_screen.dart';
 
 void main() {
+  // Enable browser context menu for right-click copy/paste on web
+  if (kIsWeb) {
+    BrowserContextMenu.enableContextMenu();
+  }
   runApp(const Image2GitHubApp());
 }
 
-class Image2GitHubApp extends StatelessWidget {
-  const Image2GitHubApp({Key? key}) : super(key: key);
-  
+class Image2GitHubApp extends StatefulWidget {
+  const Image2GitHubApp({super.key});
+
+  @override
+  State<Image2GitHubApp> createState() => _Image2GitHubAppState();
+}
+
+class _Image2GitHubAppState extends State<Image2GitHubApp> {
+  final AuthService _authService = AuthService();
+  bool _isLoading = true;
+  bool _isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final token = await _authService.getToken();
+    setState(() {
+      _isLoggedIn = token != null;
+      _isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: AppConfig.appName,
-      debugShowCheckedModeBanner: false,
+      title: 'Image2GitHub',
       theme: ThemeData(
-        brightness: Brightness.light,
-        primarySwatch: Colors.deepPurple,
-        primaryColor: Colors.deepPurple,
-        scaffoldBackgroundColor: Colors.grey.shade50,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.light,
-        ),
-        cardTheme: CardThemeData(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.deepPurple.shade700,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          centerTitle: true,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
-            elevation: 2,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          filled: true,
-          fillColor: Colors.grey.shade50,
-        ),
+        primarySwatch: Colors.blue,
         useMaterial3: true,
+        cardTheme: CardThemeData(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        appBarTheme: const AppBarTheme(
+          systemOverlayStyle: SystemUiOverlayStyle.light,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
       ),
-      home: const RepositoryListScreen(),
+      home: _isLoading
+          ? const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            )
+          : _isLoggedIn
+              ? const MainScreen()
+              : const LoginScreen(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

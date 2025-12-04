@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="432" height="432" viewBox="0 0 432 432">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#673AB7;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#9575CD;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="432" height="432" rx="96" fill="url(#grad)"/>
+  <g transform="translate(216 216)">
+    <circle cx="0" cy="-30" r="60" fill="white" opacity="0.9"/>
+    <path d="M -35 -15 Q -35 -35, -20 -40 L 20 -40 Q 35 -35, 35 -15 L 35 15 Q 35 35, 20 40 L -20 40 Q -35 35, -35 15 Z" fill="white" opacity="0.3"/>
+    <circle cx="-20" cy="-25" r="8" fill="#673AB7"/>
+    <circle cx="20" cy="-25" r="8" fill="#673AB7"/>
+    <path d="M 0 60 L -15 45 L 15 45 Z" fill="white" opacity="0.9"/>
+    <text x="0" y="95" font-family="Arial, sans-serif" font-size="32" font-weight="bold" fill="white" text-anchor="middle">GH</text>
+  </g>
+</svg>
